@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Search, ShoppingCart, Star } from 'lucide-react';
-import { MenuItem, getMenuItems } from '../services/menuService';
+import { MenuItem, streamMenuItems } from '../services/menuService';
 import { addItem } from '../store/cartSlice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
