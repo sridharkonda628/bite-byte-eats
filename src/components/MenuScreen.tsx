@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Search, ShoppingCart, Star } from 'lucide-react';
@@ -15,23 +14,31 @@ interface MenuScreenProps {
 const MenuScreen: React.FC<MenuScreenProps> = ({ onNavigateToCart, cartItemsCount }) => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const loadMenuItems = async () => {
-      try {
-        const items = await getMenuItems();
-        setMenuItems(items);
-      } catch (error) {
-        console.error('Error loading menu items:', error);
-      } finally {
-        setLoading(false);
+    console.log('Setting up menu items real-time listener...');
+    setLoading(true);
+    setError(null);
+    
+    // Set up real-time listener
+    const unsubscribe = streamMenuItems((items) => {
+      console.log('Received menu items update:', items.length);
+      setMenuItems(items);
+      setLoading(false);
+      setError(null);
+    });
+
+    // Cleanup function
+    return () => {
+      console.log('Cleaning up menu items listener');
+      if (unsubscribe) {
+        unsubscribe();
       }
     };
-
-    loadMenuItems();
   }, []);
 
   const categories = ['All', ...Array.from(new Set(menuItems.map(item => item.category)))];
@@ -52,6 +59,27 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ onNavigateToCart, cartItemsCoun
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg">Loading delicious menu...</p>
+          <p className="text-gray-500 text-sm mt-2">Connecting to Firebase...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="bg-red-100 p-6 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+            <span className="text-red-600 text-2xl">⚠️</span>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Connection Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-full"
+          >
+            Try Again
+          </Button>
         </div>
       </div>
     );
